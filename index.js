@@ -13,6 +13,8 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
+const clock = new THREE.Clock();
+var mixer = null;
 const loader = new GLTFLoader();
 loader.load('rider.glb', (gltf) => {
     const character = gltf.scene;
@@ -26,6 +28,18 @@ loader.load('rider.glb', (gltf) => {
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
 
+    loader.load('wings.glb', function(gltf) {
+        const model = gltf.scene;
+        scene.add(model);
+        model.position.set(0,1,-1.5);
+        model.scale.set(2.5, 2.5, 2.5);
+
+        const animations = gltf.animations;
+        mixer = new THREE.AnimationMixer(model);
+        const action = mixer.clipAction(animations[0]);
+        action.play();
+        action.setLoop(THREE.LoopRepeat);
+    });
     const emitter = new THREE.Object3D();
     scene.add(emitter);
     emitter.position.set(0, 2, 0.2);
@@ -42,6 +56,8 @@ loader.load('rider.glb', (gltf) => {
         requestAnimationFrame(animate);
         fireEffect.update(0.016);
         controls.update();
+        const delta = clock.getDelta();
+        if(mixer) mixer.update(delta);
         renderer.render(scene, camera);
     }
     animate();
