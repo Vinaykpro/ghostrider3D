@@ -16,6 +16,32 @@ controls.enableDamping = true;
 const clock = new THREE.Clock();
 var mixer = null;
 const loader = new GLTFLoader();
+var dissolveProgress = 0;
+var head = null;
+var faceMesh = null, others = [];
+var starting = true;
+
+loader.load('head.glb', function(gltf) {
+    head = gltf.scene;
+    const meshes = [];
+    head.traverse(function(child) {
+        if (child.isMesh) {
+            if(child.name == 'avaturn_hair_0_7') {
+                faceMesh = child;
+            } else {
+                others.push(child);
+            }
+        }
+    });
+    scene.add(head);
+    head.position.set(0,-8.8,0);
+    head.scale.set(0.49, 0.49, 0.49);
+    setTimeout(()=>{
+        dissolveProgress = 1;
+        starting = false;
+    },200);
+
+});
 loader.load('rider.glb', (gltf) => {
     const character = gltf.scene;
     character.position.set(0, -9, 0);
@@ -58,6 +84,23 @@ loader.load('rider.glb', (gltf) => {
         controls.update();
         const delta = clock.getDelta();
         if(mixer) mixer.update(delta);
+        if (dissolveProgress > 0) {
+                head.visible = true;
+                dissolveProgress -= 0.01;
+                faceMesh.scale.set(1 * dissolveProgress, 1 , 1 * dissolveProgress);
+                faceMesh.position.set(0, 0, (dissolveProgress-1)*0.1);
+                if (dissolveProgress < 0.8) {
+                    if(dissolveProgress<0.3) faceMesh.visible = false;
+                    let dp = dissolveProgress + 0.2;
+                    for(let obj of others) {
+                        if(dp < 0.45) obj.visible = false;
+                        obj.scale.set(1 * dp, 1, 1 * (dp));
+                        obj.position.set(0, 0, (dp-1)*0.1);
+                    }
+                }
+        } else if(!starting) {
+            head.visible = false;
+        }
         renderer.render(scene, camera);
     }
     animate();
