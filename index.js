@@ -5,28 +5,31 @@ import { getParticleSystem } from "./getParticleSystem.js";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 4, 10);
+camera.position.set(0, 2, 10);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+var becomingRiderAction = null, becomingAngelAction = null;
+var hellMode = false, heavenMode = false;
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
 const clock = new THREE.Clock();
 let mixer = null, mixer2 = null;
-let skull = null;
+let skull = null, spine = null, wings = null;
 const loader = new GLTFLoader();
 let dissolveProgress = 0;
 let faceMesh = null, others = [];
 let emitter = new THREE.Object3D();
 
-loader.load('mountain.glb', function(gltf) {
+loader.load('bg.glb', function(gltf) {
     const land = gltf.scene;
     scene.add(land);
-    land.position.set(-13,-10,-51);
-    land.scale.set(15, 15, 15);
-    land.rotation.y = Math.PI / 4;
+    land.position.set(120,-9, 50);
+    land.scale.set(5, 5, 5);
+    land.rotation.y = Math.PI / 1;
 });
 
 loader.load('rider.glb', (gltf) => {
@@ -37,9 +40,9 @@ loader.load('rider.glb', (gltf) => {
 
     const animations = gltf.animations;
     mixer2 = new THREE.AnimationMixer(character);
-    const action = mixer2.clipAction(animations[2]);
-    action.play();
-    action.setLoop(THREE.LoopOnce);
+    becomingRiderAction = mixer2.clipAction(animations[3]);
+    becomingRiderAction.play();
+    becomingRiderAction.setLoop(THREE.LoopOnce);
 
     character.traverse(function(child) {
         if (child.isMesh) {
@@ -51,21 +54,26 @@ loader.load('rider.glb', (gltf) => {
                 others.push(child);
             }
         }
-        if(child.isBone && child.name === 'mixamorigHead') skull = child;
+        if(child.isBone) {
+            console.log(child.name);
+            if(child.name === 'mixamorigHead') skull = child;
+            if(child.name === 'mixamorigSpine2') spine = child;
+        }
     });
 
     setTimeout(() => {
         dissolveProgress = 1;
     }, 200);
 
-    const light = new THREE.DirectionalLight(0xffffff, 2);
-    light.position.set(0, 12, 5).normalize();
+    const light = new THREE.DirectionalLight(0xffffff, 4);
+    light.position.set(0, 12, 12).normalize();
     scene.add(light);
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
 
     loader.load('wings.glb', function(gltf) {
         const model = gltf.scene;
+        wings = model;
         scene.add(model);
         model.position.set(0,1,-1.5);
         model.scale.set(2.5, 2.5, 2.5);
@@ -92,11 +100,11 @@ loader.load('rider.glb', (gltf) => {
     const sunGeometry = new THREE.SphereGeometry(3, 32, 32);
     const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xeaba12 });
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
-    sun.position.set(0, 25, -85);
+    sun.position.set(0, 50, -100);
     scene.add(sun);
 
-    const sunLight = new THREE.DirectionalLight(0xf9ff6a, 5);
-    sunLight.position.set(0, 25, -30);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 10);
+    sunLight.position.set(0, 50, -100);
     scene.add(sunLight);
 
     function animate() {
@@ -117,14 +125,23 @@ loader.load('rider.glb', (gltf) => {
             emitter.rotation.setFromRotationMatrix(skull.matrixWorld);
         }
 
-        sun.position.y -= delta * 20;
+        if(spine && wings) {
+            spine.updateWorldMatrix(true, false);
+            wings.position.setFromMatrixPosition(spine.matrixWorld);
+            const offset = new THREE.Vector3(0, 0, -1);
+            wings.position.add(offset);
+            wings.rotation.setFromRotationMatrix(spine.matrixWorld);
+        }
+
+        sun.position.y -= delta * 10;
+        sun.position.z -= delta * 20;
         if (sunLight.intensity > 0) sunLight.intensity -= delta * 5;
         sunLight.position.y = sun.position.y;
-        if (sunLight.position.y < -8) { 
+        if (sunLight.position.y < 30) { 
             scene.remove(sunLight); 
             scene.remove(sun); 
         }
-        if(light.intensity > 0.5) light.intensity -= delta * 0.9;
+        if(light.intensity > 0.8) light.intensity -= delta * 10;
 
         if (dissolveProgress > 0) {
             dissolveProgress -= 0.01;
@@ -149,3 +166,6 @@ function handleWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 window.addEventListener('resize', handleWindowResize, false);
+window.onclick = () => {
+    becomingRiderAction.play();
+}
