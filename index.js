@@ -14,32 +14,12 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
 const clock = new THREE.Clock();
-let mixer = null;
+let mixer = null, mixer2 = null;
+let skull = null;
 const loader = new GLTFLoader();
 let dissolveProgress = 0;
-let head = null;
 let faceMesh = null, others = [];
-let starting = true;
-
-loader.load('head.glb', function(gltf) {
-    head = gltf.scene;
-    head.traverse(function(child) {
-        if (child.isMesh) {
-            if(child.name === 'avaturn_hair_0_7') {
-                faceMesh = child;
-            } else {
-                others.push(child);
-            }
-        }
-    });
-    scene.add(head);
-    head.position.set(0,-8.8,0);
-    head.scale.set(0.49, 0.49, 0.49);
-    setTimeout(() => {
-        dissolveProgress = 1;
-        starting = false;
-    }, 200);
-});
+let emitter = new THREE.Object3D();
 
 loader.load('mountain.glb', function(gltf) {
     const land = gltf.scene;
@@ -54,6 +34,29 @@ loader.load('rider.glb', (gltf) => {
     character.position.set(0, -9, 0);
     character.scale.set(0.5, 0.5, 0.5);  
     scene.add(character);
+
+    const animations = gltf.animations;
+    mixer2 = new THREE.AnimationMixer(character);
+    const action = mixer2.clipAction(animations[2]);
+    action.play();
+    action.setLoop(THREE.LoopOnce);
+
+    character.traverse(function(child) {
+        if (child.isMesh) {
+            console.log(child.name);
+            if(child.name === 'avaturn_hair_0_7') {
+                faceMesh = child;
+            }
+            else if(child.name != 'body' && child.name != 'skull') {
+                others.push(child);
+            }
+        }
+        if(child.isBone && child.name === 'mixamorigHead') skull = child;
+    });
+
+    setTimeout(() => {
+        dissolveProgress = 1;
+    }, 200);
 
     const light = new THREE.DirectionalLight(0xffffff, 2);
     light.position.set(0, 12, 5).normalize();
@@ -74,15 +77,15 @@ loader.load('rider.glb', (gltf) => {
         action.setLoop(THREE.LoopRepeat);
     });
 
-    const emitter = new THREE.Object3D();
-    scene.add(emitter);
-    emitter.position.set(0, 2, 0.2);
+    if (skull) {
+        skull.add(emitter);
+    }
 
     const fireEffect = getParticleSystem({
         camera,
         emitter: emitter,
         parent: scene,
-        rate: 50.0,
+        rate: 80.0,
         texture: 'img/fire.png',
     });
 
@@ -104,17 +107,27 @@ loader.load('rider.glb', (gltf) => {
 
         const delta = clock.getDelta();
         if (mixer) mixer.update(delta);
+        if (mixer2) mixer2.update(delta);
+
+        if (skull) {
+            skull.updateWorldMatrix(true, false);
+            emitter.position.setFromMatrixPosition(skull.matrixWorld);
+            const offset = new THREE.Vector3(0, 0, 0.3);
+            emitter.position.add(offset);
+            emitter.rotation.setFromRotationMatrix(skull.matrixWorld);
+        }
 
         sun.position.y -= delta * 20;
+        if (sunLight.intensity > 0) sunLight.intensity -= delta * 5;
         sunLight.position.y = sun.position.y;
-        if (sunLight.position.y < -8) { scene.remove(sunLight); scene.remove(sun); }
-        if (light.intensity > 0.5) light.intensity = light.intensity -= delta;
+        if (sunLight.position.y < -8) { 
+            scene.remove(sunLight); 
+            scene.remove(sun); 
+        }
+        if(light.intensity > 0.5) light.intensity -= delta * 0.9;
 
         if (dissolveProgress > 0) {
-            head.visible = true;
             dissolveProgress -= 0.01;
-            faceMesh.scale.set(1 * dissolveProgress, 1 , 1 * dissolveProgress);
-            faceMesh.position.set(0, 0, (dissolveProgress-1)*0.1);
             if (dissolveProgress < 0.8) {
                 if(dissolveProgress < 0.3) faceMesh.visible = false;
                 let dp = dissolveProgress + 0.2;
@@ -124,10 +137,7 @@ loader.load('rider.glb', (gltf) => {
                     obj.position.set(0, 0, (dp-1)*0.1);
                 }
             }
-        } else if (!starting) {
-            head.visible = false;
         }
-
         renderer.render(scene, camera);
     }
     animate();
