@@ -254,6 +254,7 @@ bubble.onmouseleave = () => {
         }
         else { bubbleposition = 95; hellMode = true; dissolveProgress = 1; skyMaterial.color.set(0x333333);
         bubble.style.marginLeft = 'calc(100vw - 54px)';
+        widget.style.animation = '0.5s fadeAway ease-out forwards';
         }
     } else {
         if(bubbleposition > 30) { bubbleposition = 50;
@@ -261,6 +262,7 @@ bubble.onmouseleave = () => {
         }
         else { bubbleposition = 0; heavenMode = true; dissolveProgress = 0;  skyMaterial.color.set(0xffffff);
         bubble.style.marginLeft = 30 + 'px';
+        widget.style.animation = '0.5s fadeAway ease-out forwards';
         }
     }
     update(bubbleposition);
@@ -273,6 +275,7 @@ bubble.ontouchend = () => {
         }
         else { bubbleposition = 95; hellMode = true; dissolveProgress = 1; heavenMode = false; skyMaterial.color.set(0x333333);
         bubble.style.marginLeft = 'calc(100vw - 54px)';
+        widget.style.animation = '0.5s fadeAway ease-out forwards';
         }
     } else {
         if(bubbleposition > 30) { bubbleposition = 50; hellMode = false; heavenMode = false; dissolveProgress = 0;
@@ -280,6 +283,7 @@ bubble.ontouchend = () => {
         }
         else { bubbleposition = 0; heavenMode = true; dissolveProgress = 0; hellMode = false; skyMaterial.color.set(0xffffff);
         bubble.style.marginLeft = 30 + 'px';
+        widget.style.animation = '0.5s fadeAway ease-out forwards';
         }
     }
     update(bubbleposition);
