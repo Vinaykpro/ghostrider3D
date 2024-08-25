@@ -5,9 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ghost rider</title>
     <style>
-      body {
+      * {
         margin: 0;
+        padding:0;
+        user-select: none;
       }
+      body {
+        overflow: hidden;
+      }
+      #container {
+        position: absolute;
+        bottom: 12px;
+      }
+      .bubblebg {
+        display: flex;
+        justify-content: space-between;
+        width:calc(100vw - 24px);
+        height: 60px;
+        border-radius: 50px;
+        margin-left:12px;
+        margin-right: 12px;
+        background-color: rgba(162, 162, 162, 0.45);
+        border:1px solid #aeaeae;
+    }
+    @keyframes fadeAway {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    .bubble {
+      display: flex;
+      position: absolute;
+      justify-content: center;
+      align-items: center;
+      transform: translate(-50%, -50%);
+      height: 54px;
+      width: 54px;
+      margin-top: 30px;
+      margin-left: 50vw;
+      background-color: rgb(255, 242, 166);
+      border-radius: 50%;
+      border: 1px solid rgb(169, 169, 169);
+    }
+    .bubblehint {
+      transform: translate(-50%, -50%);
+      background-color: aqua;
+      padding: 10px;
+      border: none;
+      animation: hint 1s ease-in-out infinite;
+    }
+    @keyframes hint {
+      0% { 
+        padding: 0px;
+        opacity: 1;
+      }
+      100% {
+        padding: 20px;
+        opacity: 0;
+      }
+    }
+    @keyframes swipeRight {
+      0% {
+        margin-left: 50vw;
+      }
+      100% {
+        margin-left: calc(100vw - 54px);
+      }
+    }
+    @keyframes swipeLeft {
+      0% {
+        margin-left: 50vw;
+      }
+      100% {
+        margin-left: 30px;
+      }
+    }
+    .heaven {
+      height: calc(100% - 20px);
+      aspect-ratio: 1;
+      margin: 10px;
+      z-index: 1;
+    }
+    .hell {
+      height: calc(100% - 20px);
+      aspect-ratio: 1;
+      margin: 10px;
+      z-index: 1;
+    }
+    .texture {
+      display: none;
+      height: 100%;
+      width: 100%;
+      border-radius: 50%;
+    }
+    #log {
+      position: absolute;
+      color:white;
+      margin:10px;
+    }
+    .info {
+      color: white;
+      width: 100%;
+      text-align: center;
+      margin: 5px;
+    }
     </style>
     <script type="importmap">
       {
@@ -20,5 +120,17 @@
   </head>
   <body>
     <script type="module" src="index.js"></script>
+    <p id="log">Debug info</p>
+    <div id="container">
+    <p class="info">Slide or Press Left/Right Arrow Keys</p>
+    <div class='bubblebg'>
+      <div class="bubble bubblehint"></div>
+      <div class="bubble" id="bubble">
+        <img class='texture' src="img/moon.jpg" />
+      </div>
+      <img class='heaven' src="img/heaven.png" />
+      <img class='hell' src="img/hell.png" />
+    </div>
+    </div>
   </body>
 </html>
